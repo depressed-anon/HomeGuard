@@ -8,66 +8,78 @@ services:
     restart: unless-stopped
     hostname: unbound
     volumes:
-      - ./unbound/unbound.conf:/opt/unbound/etc/unbound/unbound.conf:ro
+      - ./configs/unbound/unbound.conf:/opt/unbound/etc/unbound/unbound.conf:ro
     ports:
-      - "127.0.0.1:5335:5335/tcp"
-      - "127.0.0.1:5335:5335/udp"
+      - "5335:5335/tcp"
+      - "5335:5335/udp"
     networks:
-      - security-net
+      - homeguard-net
 
-  # Pi-hole - DNS with ad-blocking
+  # Pi-hole - DNS with ad-blocking (Network-wide)
   pihole:
     image: docker.io/pihole/pihole:latest
     container_name: pihole
     restart: unless-stopped
-    hostname: pihole
+    hostname: homeguard
     depends_on:
       - unbound
     environment:
       TZ: 'America/New_York'
-      WEBPASSWORD: 'S!o2M#e4T%h6I&n8G('  # Change this!
-      PIHOLE_DNS_: 'unbound#5335'  # Point to unbound container by hostname
+      WEBPASSWORD: '${PIHOLE_PASSWORD:-changeme123}'
+      PIHOLE_DNS_: 'unbound#5335'
       DNSSEC: 'true'
       DNSMASQ_LISTENING: 'all'
+      VIRTUAL_HOST: 'homeguard.local'
+      ServerIP: '${SERVER_IP:-192.168.1.100}'
+      INTERFACE: 'eth0'
     volumes:
-      - ./pihole/etc-pihole:/etc/pihole
-      - ./pihole/etc-dnsmasq.d:/etc/dnsmasq.d
+      - ./data/pihole/etc-pihole:/etc/pihole
+      - ./data/pihole/etc-dnsmasq.d:/etc/dnsmasq.d
     ports:
-      - "127.0.0.1:53:53/tcp"
-      - "127.0.0.1:53:53/udp"
-      - "127.0.0.1:8080:80/tcp"  # Web interface
+      - "53:53/tcp"
+      - "53:53/udp"
+      - "80:80/tcp"  # Web interface - network accessible
     networks:
-      - security-net
+      - homeguard-net
+    dns:
+      - 127.0.0.1
+      - 1.1.1.1
 
-  # Squid - HTTP/HTTPS proxy
-  squid:
-    image: docker.io/ubuntu/squid:latest
-    container_name: squid
+  # Dashboard - Enhanced web interface
+  dashboard:
+    image: docker.io/nginx:alpine
+    container_name: homeguard-dashboard
     restart: unless-stopped
-    hostname: squid
-    ports:
-      - "127.0.0.1:3128:3128/tcp"
+    hostname: dashboard
     volumes:
-      - ./squid/cache:/var/spool/squid
-      - ./squid/logs:/var/log/squid
-      - ./squid/squid.conf:/etc/squid/squid.conf:ro
-    networks:
-      - security-net
-
-  # Dante - SOCKS5 proxy
-  dante:
-    image: docker.io/wernight/dante:latest
-    container_name: dante
-    restart: unless-stopped
-    hostname: dante
+      - ./setup-wizard:/usr/share/nginx/html:ro
+      - ./configs/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     ports:
-      - "127.0.0.1:1080:1080/tcp"
+      - "8080:80/tcp"
     networks:
-      - security-net
+      - homeguard-net
+    depends_on:
+      - pihole
+
+  # Network Monitor - Device discovery and monitoring
+  netmonitor:
+    image: docker.io/python:3.11-slim
+    container_name: netmonitor
+    restart: unless-stopped
+    hostname: netmonitor
+    volumes:
+      - ./scripts/netmonitor:/app:ro
+      - ./data/netmonitor:/data
+    working_dir: /app
+    command: python3 monitor.py
+    network_mode: host  # Needed for network scanning
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
 
 networks:
-  security-net:
+  homeguard-net:
     driver: bridge
     ipam:
       config:
-        - subnet: 172.20.0.0/16
+        - subnet: 172.21.0.0/16

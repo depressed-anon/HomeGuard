@@ -1,163 +1,350 @@
-# Security Stack
+# HomeGuard Pro - Network Security Appliance
 
-A containerized privacy and security infrastructure running on your laptop.
+**Transform any Raspberry Pi into a powerful network security appliance**
 
-## What's Running
+HomeGuard Pro protects your entire home or office network from ads, trackers, malware, and online threats - with zero configuration required.
 
-- **Pi-hole** (port 53, 8080) - DNS with ad/tracker blocking + Web UI
-- **Unbound** (port 5335) - Recursive DNS resolver for maximum privacy
-- **Squid** (port 3128) - HTTP/HTTPS caching proxy
-- **Dante** (port 1080) - SOCKS5 proxy
+## 🎯 What It Does
 
-## Architecture
+- **Network-Wide Ad Blocking** - Blocks ads on every device automatically
+- **Privacy Protection** - Stops trackers and data collection
+- **Malware Defense** - Blocks malicious domains before they load
+- **Device Monitoring** - See and manage all connected devices
+- **Simple Dashboard** - User-friendly web interface
+- **VPN Ready** - Secure remote access capability
 
-```
-Your Apps → Pi-hole (blocks ads) → Unbound (recursive DNS) → Root DNS servers
-Your Browser → Squid Proxy (HTTP) or Dante (SOCKS5) → Internet
-```
+## 🚀 Quick Start
 
-## Quick Start
+### Deployment Modes
 
-### Check Status
+HomeGuard Pro offers multiple deployment modes to fit your network setup:
+
+#### 🔹 **Transparent Gateway Mode** (NEW - Recommended)
+
+**Zero configuration** - Just plug into your existing network!
+
 ```bash
-cd ~/security-stack
-./manage.sh status
+# Connect to your network (WiFi or Ethernet)
+# Then run:
+cd /opt/homeguard
+sudo ./scripts/setup-transparent-gateway.sh
 ```
 
-### Start/Stop/Restart
+**What it does:**
+- Transparently intercepts all network traffic (ARP spoofing)
+- Enforces client isolation (software PVLAN)
+- No router configuration needed
+- No managed switches required
+- Works with any existing network
+
+[📖 Read Transparent Gateway Architecture](docs/transparent-gateway-architecture.md)
+
+#### 🔹 **Traditional Deployment**
+
+**Full control** - Replace your router or act as DNS server.
+
 ```bash
-./manage.sh start
-./manage.sh stop
-./manage.sh restart
+# Download and run the deployment script
+curl -sSL https://raw.githubusercontent.com/depressed-anon/homeguard-pro/main/scripts/deploy.sh | sudo bash
+```
+
+**What it does:**
+- HomeGuard acts as DNS server
+- Requires router DNS configuration
+- More traditional setup
+- Maximum compatibility
+
+#### 🔹 **Pre-Built Image** (Coming Soon)
+
+Download the HomeGuard Pro image and flash it to your SD card using Raspberry Pi Imager.
+
+## 📋 Requirements
+
+### Hardware
+- **Minimum:** Raspberry Pi Zero 2 W
+- **Recommended:** Raspberry Pi 4 (2GB+ RAM)
+- **Premium:** Raspberry Pi 5 or Rock Pi 4
+
+### Software
+- Raspberry Pi OS (Bullseye or newer)
+- Docker & Docker Compose (auto-installed by script)
+- 16GB+ SD card
+
+### Network
+- Ethernet connection to router
+- Static IP recommended
+- Router admin access for DNS configuration
+
+## 🎨 Features
+
+### Core Security Stack
+
+| Component | Purpose | Port |
+|-----------|---------|------|
+| Pi-hole | DNS-based ad blocking | 53, 80 |
+| Unbound | Private recursive DNS resolver | 5335 |
+| Dashboard | Web management interface | 8080 |
+| Net Monitor | Device discovery & monitoring | N/A |
+
+### Setup Wizard
+
+First-time setup takes just 3 minutes:
+
+1. **Network Configuration** - Automatic DHCP or manual static IP
+2. **Security Level** - Choose protection: Standard, Family Safe, or Maximum
+3. **Admin Password** - Secure your dashboard
+4. **Router Setup** - Step-by-step DNS configuration guide
+
+### Enhanced Dashboard
+
+Beautiful, responsive interface showing:
+- Real-time blocking statistics
+- Connected devices with icons
+- Recent activity log
+- Quick actions and settings
+- Network health monitoring
+
+### Network Monitoring
+
+Automatic device discovery shows:
+- Device name and type
+- IP and MAC addresses
+- Online/offline status
+- Manufacturer information
+- Connection history
+
+## 📖 Post-Installation Setup
+
+### Step 1: Complete Setup Wizard
+
+1. Navigate to `http://homeguard.local:8080` or `http://[YOUR-IP]:8080`
+2. Follow the setup wizard
+3. Set a strong admin password
+4. Choose your protection level
+
+### Step 2: Configure Your Router
+
+**Option A: Use HomeGuard as Network DNS (Recommended)**
+
+1. Log into your router admin panel
+2. Find DHCP/DNS settings
+3. Set Primary DNS to your HomeGuard IP (e.g., 192.168.1.100)
+4. Set Secondary DNS to 1.1.1.1 (backup)
+5. Save and reboot router
+
+**Option B: Manual Device Configuration**
+
+Configure DNS on each device:
+- Set DNS server to HomeGuard's IP address
+- Works immediately without router changes
+
+### Step 3: Test Protection
+
+1. Visit http://pi.hole/admin to access Pi-hole
+2. Check that queries are being logged
+3. Try visiting a known ad site - it should be blocked
+4. View blocked domains in real-time
+
+## 🔧 Configuration
+
+### Adjusting Protection Levels
+
+Edit `docker-compose.yml` environment variables:
+
+```yaml
+pihole:
+  environment:
+    - WEBPASSWORD=your_secure_password
+    - PIHOLE_DNS_=unbound#5335
+    - DNSSEC=true
+```
+
+### Adding Custom Blocklists
+
+1. Access Pi-hole admin: `http://homeguard.local/admin`
+2. Go to Group Management → Adlists
+3. Add your custom blocklist URLs
+4. Update gravity: Tools → Update Gravity
+
+### Customizing Dashboard
+
+Edit `/setup-wizard/dashboard.html` to customize:
+- Colors and branding
+- Statistics displayed
+- Quick action buttons
+- Activity log format
+
+## 🛠️ Management
+
+### Start/Stop Services
+
+```bash
+cd /opt/homeguard
+docker-compose stop    # Stop all services
+docker-compose start   # Start all services
+docker-compose restart # Restart all services
 ```
 
 ### View Logs
+
 ```bash
-./manage.sh logs           # All services
-./manage.sh logs pihole    # Specific service
+docker-compose logs pihole      # Pi-hole logs
+docker-compose logs unbound     # DNS resolver logs
+docker-compose logs netmonitor  # Network monitoring logs
 ```
 
-### Configure System DNS (One-time setup)
+### Update HomeGuard
+
 ```bash
-./manage.sh configure-dns
+cd /opt/homeguard
+git pull
+docker-compose pull
+docker-compose up -d
 ```
-This makes your system use Pi-hole for all DNS queries automatically.
 
-### Enable Auto-Start on Boot
+### Backup Configuration
+
 ```bash
-./manage.sh install-service
+# Backup all data
+tar -czf homeguard-backup-$(date +%Y%m%d).tar.gz /opt/homeguard/data
+
+# Restore from backup
+tar -xzf homeguard-backup-YYYYMMDD.tar.gz -C /
 ```
 
-### Disable Auto-Start
+## 🔒 Security Best Practices
+
+1. **Change default password** immediately after installation
+2. **Use static IP** to prevent DNS configuration issues
+3. **Enable HTTPS** for dashboard access (optional)
+4. **Regular updates** - Run updates monthly
+5. **Backup configs** before making changes
+6. **Monitor logs** for suspicious activity
+
+## 📊 Monitoring & Statistics
+
+### Pi-hole Statistics
+
+- Total queries blocked
+- Percentage of blocked requests
+- Top blocked domains
+- Query types breakdown
+- Client activity
+
+### Device Monitoring
+
+- Number of connected devices
+- Device identification
+- Bandwidth usage (coming soon)
+- Per-device blocking statistics
+
+## 🐛 Troubleshooting
+
+### Services Won't Start
+
 ```bash
-./manage.sh uninstall-service
+# Check Docker status
+sudo systemctl status docker
+
+# Restart Docker
+sudo systemctl restart docker
+
+# Check container logs
+docker-compose logs
 ```
 
-## Access Services
+### DNS Not Working
 
-### Pi-hole Web Interface
-- URL: http://127.0.0.1:8080/admin
-- Password: (the one you set with `podman exec pihole pihole setpassword`)
-
-### Using the Proxies
-
-**Squid HTTP Proxy:**
 ```bash
-export http_proxy=http://127.0.0.1:3128
-export https_proxy=http://127.0.0.1:3128
+# Test DNS resolution
+dig @192.168.1.100 google.com
+
+# Check Pi-hole is listening
+sudo netstat -tulpn | grep :53
+
+# Verify containers are running
+docker-compose ps
 ```
 
-**SOCKS5 Proxy:**
+### Dashboard Not Accessible
+
 ```bash
-curl -x socks5://127.0.0.1:1080 http://example.com
+# Check Nginx container
+docker logs homeguard-dashboard
+
+# Verify port 8080 is open
+sudo ss -tulpn | grep :8080
+
+# Restart dashboard
+docker-compose restart dashboard
 ```
 
-Or configure your browser:
-- Firefox: Settings → Network Settings → Manual proxy
-  - SOCKS Host: 127.0.0.1, Port: 1080
-  - SOCKS v5
+### Network Monitor Not Detecting Devices
 
-## Manual Control
-
-### Using podman-compose directly
 ```bash
-cd ~/security-stack
-podman-compose up -d        # Start
-podman-compose down          # Stop
-podman-compose restart squid # Restart one service
-podman-compose logs -f       # Follow logs
+# Check network monitor logs
+docker logs netmonitor
+
+# Verify host network mode
+docker inspect netmonitor | grep NetworkMode
+
+# Manually install arp-scan
+sudo apt-get install arp-scan
 ```
 
-### Change Pi-hole Password
-```bash
-podman exec pihole pihole setpassword 'YourNewPassword'
-```
+## 🎁 Commercial Features (Planned)
 
-## File Structure
+### HomeGuard Pro Premium ($5/month)
 
-```
-~/security-stack/
-├── docker-compose.yml       # Main configuration
-├── manage.sh                # Management script
-├── configure-dns.sh         # DNS configuration script
-├── README.md                # This file
-├── unbound/
-│   └── unbound.conf         # Unbound config
-├── pihole/
-│   ├── etc-pihole/          # Pi-hole settings (auto-created)
-│   └── etc-dnsmasq.d/       # DNS config (auto-created)
-├── squid/
-│   ├── squid.conf           # Squid configuration
-│   ├── cache/               # Squid cache data
-│   └── logs/                # Squid logs
-└── socks/                   # (Dante doesn't need volumes)
-```
+- ☁️ Cloud dashboard access
+- 📧 Email/SMS threat alerts
+- 📊 Advanced analytics & reports
+- 👨‍👩‍👧‍👦 Family controls per device
+- 🔐 VPN server (WireGuard)
+- 💬 Priority support
 
-## Troubleshooting
+### HomeGuard Enterprise ($50/month)
 
-### Containers won't start
-```bash
-cd ~/security-stack
-podman-compose down
-podman-compose up -d
-```
+- 🏢 Multi-site management
+- 📁 Active Directory integration
+- 📋 Compliance reporting
+- 📞 24/7 phone support
+- 🎯 Custom blocklists
+- 🔄 Managed updates
 
-### Check specific service logs
-```bash
-podman logs pihole
-podman logs unbound
-podman logs squid
-podman logs dante
-```
+## 🤝 Contributing
 
-### DNS not working
-```bash
-# Test DNS directly
-dig @127.0.0.1 google.com
+HomeGuard Pro is open source! Contributions welcome:
 
-# Check if Pi-hole is running
-podman ps | grep pihole
-```
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
 
-### Reset everything
-```bash
-cd ~/security-stack
-podman-compose down
-rm -rf pihole/ squid/cache/ squid/logs/
-podman-compose up -d
-```
+## 📝 License
 
-## Expanding to Router
+MIT License - See LICENSE file for details
 
-When you're ready to share this with other devices via a router:
+## 🔗 Links
 
-1. Change port bindings in docker-compose.yml from `127.0.0.1:53` to `0.0.0.0:53`
-2. Configure router to use your laptop's IP for DNS
-3. Configure firewall to allow connections from router network
+- **Documentation**: https://docs.homeguard.local (coming soon)
+- **GitHub**: https://github.com/depressed-anon/homeguard-pro
+- **Community Discord**: [Join here] (coming soon)
+- **Support Email**: support@homeguard.local
 
-## Notes
+## 💡 Educational Demo Integration
 
-- All data is stored in `~/security-stack/` - easy to backup
-- Containers auto-restart unless stopped manually
-- Pi-hole password is stored in its database, not in docker-compose.yml
-- Special characters in YAML passwords can cause issues - use simple passwords or change via CLI
+HomeGuard pairs perfectly with WiFi security education demonstrations:
+
+1. **Run WiFi security demo** at events/conferences
+2. **Show real-world risks** using provocative network names
+3. **Offer HomeGuard** as the solution for home network protection
+4. **Special discount code** for demo participants
+
+See `/docs/wifi-demo-integration.md` for setup instructions.
+
+---
+
+**Made with ❤️ for network security education**
+
+*Protect your network. Protect your privacy. Protect your family.*

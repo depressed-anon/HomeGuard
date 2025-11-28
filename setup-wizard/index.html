@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HomeGuard Setup Wizard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .wizard-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .wizard-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .wizard-header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .wizard-header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .wizard-content {
+            padding: 40px;
+        }
+
+        .step {
+            display: none;
+        }
+
+        .step.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .step h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .step p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        input[type="file"],
+        select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .info-box {
+            background: #f5f5f5;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .info-box p {
+            margin: 0;
+            color: #555;
+            font-size: 0.95em;
+        }
+
+        .network-info {
+            background: #e8f5e9;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .network-info strong {
+            color: #2e7d32;
+        }
+
+        .wizard-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+
+        button {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-next,
+        .btn-finish {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-next:hover,
+        .btn-finish:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-prev {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-prev:hover {
+            background: #d0d0d0;
+        }
+
+        .progress-bar {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+
+        .progress-step {
+            flex: 1;
+            height: 4px;
+            background: #e0e0e0;
+            margin: 0 5px;
+            border-radius: 2px;
+            transition: background 0.3s;
+        }
+
+        .progress-step.completed {
+            background: #667eea;
+        }
+
+        .success-icon {
+            text-align: center;
+            font-size: 4em;
+            margin: 20px 0;
+        }
+
+        .feature-list {
+            list-style: none;
+            margin: 20px 0;
+        }
+
+        .feature-list li {
+            padding: 10px 0;
+            padding-left: 30px;
+            position: relative;
+            color: #555;
+        }
+
+        .feature-list li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #4caf50;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .password-feedback {
+            margin-top: 8px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.9em;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .password-feedback.weak {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #ef5350;
+        }
+
+        .password-feedback.medium {
+            background: #fff3e0;
+            color: #ef6c00;
+            border: 1px solid #ff9800;
+        }
+
+        .password-feedback.strong {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #4caf50;
+        }
+
+        .password-feedback.match {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #4caf50;
+        }
+
+        .password-feedback.nomatch {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #ef5350;
+        }
+
+        /* Error Modal */
+        .error-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s;
+        }
+
+        .error-modal.show {
+            display: flex;
+        }
+
+        .error-modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 400px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.3s;
+            text-align: center;
+        }
+
+        .error-modal-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        .error-modal h3 {
+            color: #c62828;
+            margin-bottom: 10px;
+            font-size: 1.3em;
+        }
+
+        .error-modal p {
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .error-modal-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .error-modal-button:hover {
+            transform: translateY(-2px);
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="wizard-container">
+        <div class="wizard-header">
+            <h1>🛡️ HomeGuard</h1>
+            <p>Network Security Appliance</p>
+        </div>
+
+        <div class="wizard-content">
+            <div class="progress-bar">
+                <div class="progress-step completed"></div>
+                <div class="progress-step"></div>
+                <div class="progress-step"></div>
+                <div class="progress-step"></div>
+                <div class="progress-step"></div>
+                <div class="progress-step"></div>
+            </div>
+
+            <!-- Step 1: Welcome -->
+            <div class="step active" id="step1">
+                <h2>Welcome to HomeGuard!</h2>
+                <p>This wizard will help you set up your network security appliance in just a few minutes.</p>
+
+                <ul class="feature-list">
+                    <li>Block ads and trackers across your entire network</li>
+                    <li>Protect against malicious websites and phishing</li>
+                    <li>Monitor all devices on your network</li>
+                    <li>Create a secure VPN for remote access</li>
+                    <li>Simple, user-friendly dashboard</li>
+                </ul>
+
+                <div class="info-box">
+                    <p><strong>Note:</strong> Make sure HomeGuard is connected to your router via Ethernet cable before continuing.</p>
+                </div>
+
+                <div class="wizard-buttons">
+                    <div></div>
+                    <button class="btn-next" onclick="nextStep(1)">Get Started →</button>
+                </div>
+            </div>
+
+            <!-- Step 2: Network Configuration -->
+            <div class="step" id="step2">
+                <h2>Network Configuration</h2>
+                <p>Let's configure HomeGuard's network settings.</p>
+
+                <div class="network-info">
+                    <p><strong>Current IP Address:</strong> <span id="currentIP">192.168.1.100</span></p>
+                    <p><strong>Gateway:</strong> <span id="gateway">192.168.1.1</span></p>
+                </div>
+
+                <div class="form-group">
+                    <label for="ipMode">IP Configuration</label>
+                    <select id="ipMode" onchange="toggleIPConfig()">
+                        <option value="dhcp" selected>Automatic (DHCP)</option>
+                        <option value="static">Manual (Static IP)</option>
+                    </select>
+                </div>
+
+                <div id="staticIPFields" style="display: none;">
+                    <div class="form-group">
+                        <label for="staticIP">Static IP Address</label>
+                        <input type="text" id="staticIP" placeholder="192.168.1.100">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="subnetMask">Subnet Mask</label>
+                        <input type="text" id="subnetMask" placeholder="255.255.255.0">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="gatewayIP">Gateway</label>
+                        <input type="text" id="gatewayIP" placeholder="192.168.1.1">
+                    </div>
+                </div>
+
+                <div class="wizard-buttons">
+                    <button class="btn-prev" onclick="prevStep(2)">← Back</button>
+                    <button class="btn-next" onclick="nextStep(2)">Next →</button>
+                </div>
+            </div>
+
+            <!-- Step 3: Security Settings -->
+            <div class="step" id="step3">
+                <h2>Security Settings</h2>
+                <p>Choose your protection level and set an admin password.</p>
+
+                <div class="form-group">
+                    <label for="protectionLevel">Protection Level</label>
+                    <select id="protectionLevel" onchange="updateProtectionDescription()">
+                        <option value="standard" selected>Standard</option>
+                        <option value="family">Family Safe</option>
+                        <option value="maximum">Maximum</option>
+                    </select>
+
+                    <div class="info-box" id="protectionDescription" style="margin-top: 15px;">
+                        <p><strong>Standard Protection:</strong></p>
+                        <p>✓ Blocks ads and trackers<br>
+                           ✓ Blocks malware and phishing sites<br>
+                           ✓ Fast DNS resolution</p>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="adminPassword">Admin Password</label>
+                    <input type="password" id="adminPassword" placeholder="Create a strong password" onkeyup="checkPasswordStrength()">
+                    <div id="passwordStrength" class="password-feedback"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="adminPasswordConfirm">Confirm Password</label>
+                    <input type="password" id="adminPasswordConfirm" placeholder="Re-enter password" onkeyup="checkPasswordMatch()">
+                    <div id="passwordMatch" class="password-feedback"></div>
+                </div>
+
+                <div class="wizard-buttons">
+                    <button class="btn-prev" onclick="prevStep(3)">← Back</button>
+                    <button class="btn-next" onclick="nextStep(3)">Next →</button>
+                </div>
+            </div>
+
+            <!-- Step 4: VPN Integration -->
+            <div class="step" id="step4">
+                <h2>VPN Integration</h2>
+                <p>Do you have a VPN subscription? HomeGuard can route all your network traffic through it.</p>
+
+                <div class="info-box">
+                    <p><strong>Benefits of VPN integration:</strong></p>
+                    <ul class="feature-list">
+                        <li>Protect all devices automatically (no per-device setup)</li>
+                        <li>Works with IoT devices that can't run VPN apps</li>
+                        <li>One-time configuration</li>
+                        <li>Change servers easily from dashboard</li>
+                    </ul>
+                </div>
+
+                <div class="form-group">
+                    <label>Do you have a VPN subscription?</label>
+                    <select id="hasVPN" onchange="toggleVPNSteps()">
+                        <option value="no" selected>No, skip VPN setup</option>
+                        <option value="yes">Yes, I want to configure my VPN</option>
+                    </select>
+                </div>
+
+                <div class="wizard-buttons">
+                    <button class="btn-prev" onclick="prevStep(4)">← Back</button>
+                    <button class="btn-next" onclick="nextStep(4)">Next →</button>
+                </div>
+            </div>
+
+            <!-- Step 5: VPN Configuration -->
+            <div class="step" id="step5">
+                <h2>Select VPN Provider</h2>
+                <p>Choose your VPN provider from the list below.</p>
+
+                <div class="form-group">
+                    <label for="vpnProvider">VPN Provider</label>
+                    <select id="vpnProvider" onchange="showVPNCredentials()">
+                        <option value="">-- Select Provider --</option>
+                        <option value="nordvpn">NordVPN</option>
+                        <option value="mullvad">Mullvad</option>
+                        <option value="protonvpn">ProtonVPN</option>
+                        <option value="surfshark">Surfshark</option>
+                        <option value="pia">Private Internet Access (PIA)</option>
+                        <option value="expressvpn">ExpressVPN</option>
+                        <option value="other">Other (Manual Config)</option>
+                    </select>
+                </div>
+
+                <div id="vpnCredentialsForm" style="display: none; margin-top: 20px;">
+                    <!-- Dynamic form populated by showVPNCredentials() -->
+                </div>
+
+                <div class="info-box" style="margin-top: 20px;">
+                    <p><strong>🔒 Security Note:</strong> Your credentials are stored locally on HomeGuard and never sent anywhere else.</p>
+                </div>
+
+                <div class="wizard-buttons">
+                    <button class="btn-prev" onclick="prevStep(5)">← Back</button>
+                    <button class="btn-next" onclick="nextStep(5)">Next →</button>
+                </div>
+            </div>
+
+            <!-- Step 6: Complete -->
+            <div class="step" id="step6">
+                <div class="success-icon">✅</div>
+                <h2 style="text-align: center;">Setup Complete!</h2>
+                <p style="text-align: center;">HomeGuard is now protecting your network.</p>
+
+                <div id="vpnCompletionMessage" style="display: none;" class="info-box">
+                    <p><strong>✓ VPN Configured:</strong> All network traffic is now routed through your VPN provider. All devices are protected automatically!</p>
+                </div>
+
+                <div class="info-box">
+                    <p><strong>Next Steps:</strong></p>
+                    <ul class="feature-list" style="margin-top: 10px;">
+                        <li>Configure your router to use HomeGuard as the DNS server</li>
+                        <li>Set HomeGuard's IP (192.168.1.100) as your primary DNS</li>
+                        <li>Access the dashboard at <strong>http://homeguard.local</strong></li>
+                        <li>View the quick start guide for detailed instructions</li>
+                    </ul>
+                </div>
+
+                <div class="network-info" style="margin-top: 20px;">
+                    <p><strong>HomeGuard Dashboard:</strong> <a href="http://homeguard.local" target="_blank">http://homeguard.local</a></p>
+                    <p><strong>Pi-hole Admin:</strong> <a href="http://homeguard.local/admin" target="_blank">http://homeguard.local/admin</a></p>
+                    <p><strong>Username:</strong> admin</p>
+                    <p><strong>Password:</strong> (the one you just created)</p>
+                </div>
+
+                <div class="wizard-buttons">
+                    <button class="btn-prev" onclick="prevStep(6)">← Back</button>
+                    <button class="btn-finish" onclick="finishSetup()">Go to Dashboard →</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        let vpnEnabled = false;
+
+        function toggleVPNSteps() {
+            vpnEnabled = document.getElementById('hasVPN').value === 'yes';
+        }
+
+        function showVPNCredentials() {
+            const provider = document.getElementById('vpnProvider').value;
+            const form = document.getElementById('vpnCredentialsForm');
+
+            if (!provider) {
+                form.style.display = 'none';
+                return;
+            }
+
+            const credentialForms = {
+                nordvpn: `
+                    <div class="form-group">
+                        <label>NordVPN Username</label>
+                        <input type="text" id="vpn_username" placeholder="Your NordVPN username" required>
+                    </div>
+                    <div class="form-group">
+                        <label>NordVPN Password</label>
+                        <input type="password" id="vpn_password" placeholder="Your NordVPN password" required>
+                    </div>
+                `,
+                mullvad: `
+                    <div class="form-group">
+                        <label>Mullvad Account Number</label>
+                        <input type="text" id="vpn_account" placeholder="16-digit account number" required pattern="[0-9]{16}">
+                        <p style="font-size: 0.9em; color: #666; margin-top: 5px;">Example: 1234567890123456</p>
+                    </div>
+                `,
+                protonvpn: `
+                    <div class="form-group">
+                        <label>ProtonVPN Username</label>
+                        <input type="text" id="vpn_username" placeholder="Your ProtonVPN username" required>
+                    </div>
+                    <div class="form-group">
+                        <label>ProtonVPN Password</label>
+                        <input type="password" id="vpn_password" placeholder="Your ProtonVPN password" required>
+                    </div>
+                `,
+                surfshark: `
+                    <div class="form-group">
+                        <label>Surfshark Username</label>
+                        <input type="text" id="vpn_username" placeholder="Your Surfshark username" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Surfshark Password</label>
+                        <input type="password" id="vpn_password" placeholder="Your Surfshark password" required>
+                    </div>
+                `,
+                pia: `
+                    <div class="form-group">
+                        <label>PIA Username</label>
+                        <input type="text" id="vpn_username" placeholder="Your PIA username" required>
+                    </div>
+                    <div class="form-group">
+                        <label>PIA Password</label>
+                        <input type="password" id="vpn_password" placeholder="Your PIA password" required>
+                    </div>
+                `,
+                expressvpn: `
+                    <div class="form-group">
+                        <label>ExpressVPN Activation Code</label>
+                        <input type="text" id="vpn_activation" placeholder="Your activation code" required>
+                        <p style="font-size: 0.9em; color: #666; margin-top: 5px;">Found in your ExpressVPN account</p>
+                    </div>
+                `,
+                other: `
+                    <div class="form-group">
+                        <label>Configuration File</label>
+                        <input type="file" id="vpn_config_file" accept=".ovpn,.conf" required>
+                        <p style="font-size: 0.9em; color: #666; margin-top: 5px;">Upload your OpenVPN (.ovpn) or WireGuard (.conf) config file</p>
+                    </div>
+                `
+            };
+
+            form.innerHTML = credentialForms[provider] || '';
+            form.style.display = 'block';
+        }
+
+        function gatherVPNCredentials() {
+            const provider = document.getElementById('vpnProvider').value;
+            const credentials = {};
+
+            const usernameEl = document.getElementById('vpn_username');
+            const passwordEl = document.getElementById('vpn_password');
+            const accountEl = document.getElementById('vpn_account');
+            const activationEl = document.getElementById('vpn_activation');
+            const configFileEl = document.getElementById('vpn_config_file');
+
+            if (usernameEl) credentials.username = usernameEl.value;
+            if (passwordEl) credentials.password = passwordEl.value;
+            if (accountEl) credentials.account = accountEl.value;
+            if (activationEl) credentials.activation = activationEl.value;
+            if (configFileEl && configFileEl.files.length > 0) {
+                credentials.config_file = configFileEl.files[0].name;
+            }
+
+            return credentials;
+        }
+
+        function nextStep(step) {
+            // Validation
+            if (step === 3) {
+                const password = document.getElementById('adminPassword').value;
+                const confirm = document.getElementById('adminPasswordConfirm').value;
+
+                if (!password || password.length < 8) {
+                    showError('Password Too Short', 'Please create a password with at least 8 characters. For better security, use 12+ characters with a mix of letters, numbers, and symbols.');
+                    return;
+                }
+
+                if (password !== confirm) {
+                    showError('Passwords Don\'t Match', 'The passwords you entered don\'t match. Please make sure both password fields are identical.');
+                    return;
+                }
+            }
+
+            // Handle VPN skip logic
+            if (step === 4 && !vpnEnabled) {
+                // Skip VPN configuration step
+                document.getElementById('step' + currentStep).classList.remove('active');
+                currentStep = 6;
+                document.getElementById('step' + currentStep).classList.add('active');
+                updateProgressBar();
+                saveSettings();
+                return;
+            }
+
+            // Validate VPN provider selection
+            if (step === 5) {
+                const provider = document.getElementById('vpnProvider').value;
+                if (!provider) {
+                    showError('VPN Provider Required', 'Please select your VPN provider or go back and choose "No" to skip VPN setup.');
+                    return;
+                }
+
+                // Validate credentials are filled
+                const username = document.getElementById('vpn_username');
+                const password = document.getElementById('vpn_password');
+                const account = document.getElementById('vpn_account');
+                const activation = document.getElementById('vpn_activation');
+                const configFile = document.getElementById('vpn_config_file');
+
+                if (username && !username.value) {
+                    showError('Credentials Required', 'Please enter your VPN username.');
+                    return;
+                }
+                if (password && !password.value) {
+                    showError('Credentials Required', 'Please enter your VPN password.');
+                    return;
+                }
+                if (account && !account.value) {
+                    showError('Credentials Required', 'Please enter your Mullvad account number.');
+                    return;
+                }
+                if (activation && !activation.value) {
+                    showError('Credentials Required', 'Please enter your ExpressVPN activation code.');
+                    return;
+                }
+                if (configFile && configFile.files.length === 0) {
+                    showError('Config File Required', 'Please upload your VPN configuration file.');
+                    return;
+                }
+
+                // Save settings
+                saveSettings();
+            }
+
+            document.getElementById('step' + currentStep).classList.remove('active');
+            currentStep = step + 1;
+            document.getElementById('step' + currentStep).classList.add('active');
+            updateProgressBar();
+        }
+
+        function prevStep(step) {
+            // Handle VPN skip when going backwards
+            if (step === 6 && !vpnEnabled) {
+                // Skip back over VPN configuration
+                document.getElementById('step' + currentStep).classList.remove('active');
+                currentStep = 4;
+                document.getElementById('step' + currentStep).classList.add('active');
+                updateProgressBar();
+                return;
+            }
+
+            document.getElementById('step' + currentStep).classList.remove('active');
+            currentStep = step - 1;
+            document.getElementById('step' + currentStep).classList.add('active');
+            updateProgressBar();
+        }
+
+        function updateProgressBar() {
+            const steps = document.querySelectorAll('.progress-step');
+            steps.forEach((step, index) => {
+                if (index < currentStep) {
+                    step.classList.add('completed');
+                } else {
+                    step.classList.remove('completed');
+                }
+            });
+        }
+
+        function toggleIPConfig() {
+            const mode = document.getElementById('ipMode').value;
+            const staticFields = document.getElementById('staticIPFields');
+            staticFields.style.display = mode === 'static' ? 'block' : 'none';
+        }
+
+        function saveSettings() {
+            const settings = {
+                ipMode: document.getElementById('ipMode').value,
+                staticIP: document.getElementById('staticIP').value,
+                subnetMask: document.getElementById('subnetMask').value,
+                gatewayIP: document.getElementById('gatewayIP').value,
+                protectionLevel: document.getElementById('protectionLevel').value,
+                adminPassword: document.getElementById('adminPassword').value,
+                hasVPN: vpnEnabled,
+                vpnProvider: vpnEnabled ? document.getElementById('vpnProvider').value : null,
+                vpnCredentials: vpnEnabled ? gatherVPNCredentials() : null
+            };
+
+            // Show VPN completion message if VPN is enabled
+            if (vpnEnabled) {
+                document.getElementById('vpnCompletionMessage').style.display = 'block';
+            }
+
+            // In production, this would call an API endpoint
+            console.log('Saving settings:', settings);
+            localStorage.setItem('homeguard-settings', JSON.stringify(settings));
+        }
+
+        function checkPasswordStrength() {
+            const password = document.getElementById('adminPassword').value;
+            const feedback = document.getElementById('passwordStrength');
+
+            if (password.length === 0) {
+                feedback.innerHTML = '';
+                feedback.className = 'password-feedback';
+                return;
+            }
+
+            let strength = 0;
+            const checks = {
+                length: password.length >= 12,
+                lowercase: /[a-z]/.test(password),
+                uppercase: /[A-Z]/.test(password),
+                number: /[0-9]/.test(password),
+                special: /[^A-Za-z0-9]/.test(password)
+            };
+
+            // Count passing checks
+            strength = Object.values(checks).filter(Boolean).length;
+
+            if (strength <= 2 || password.length < 8) {
+                feedback.className = 'password-feedback weak';
+                feedback.innerHTML = '❌ Weak - Need at least 8 characters with letters, numbers, and symbols';
+            } else if (strength <= 4 || password.length < 12) {
+                feedback.className = 'password-feedback medium';
+                feedback.innerHTML = '⚠️ Medium - Add more characters for better security (12+ recommended)';
+            } else {
+                feedback.className = 'password-feedback strong';
+                feedback.innerHTML = '✓ Strong password - Good to go!';
+            }
+
+            // Also check match if confirm field has content
+            if (document.getElementById('adminPasswordConfirm').value) {
+                checkPasswordMatch();
+            }
+        }
+
+        function checkPasswordMatch() {
+            const password = document.getElementById('adminPassword').value;
+            const confirm = document.getElementById('adminPasswordConfirm').value;
+            const feedback = document.getElementById('passwordMatch');
+
+            if (confirm.length === 0) {
+                feedback.innerHTML = '';
+                feedback.className = 'password-feedback';
+                return;
+            }
+
+            if (password === confirm) {
+                feedback.className = 'password-feedback match';
+                feedback.innerHTML = '✓ Passwords match';
+            } else {
+                feedback.className = 'password-feedback nomatch';
+                feedback.innerHTML = '❌ Passwords do not match';
+            }
+        }
+
+        function updateProtectionDescription() {
+            const level = document.getElementById('protectionLevel').value;
+            const descBox = document.getElementById('protectionDescription');
+
+            const descriptions = {
+                standard: `
+                    <p><strong>Standard Protection:</strong></p>
+                    <p>✓ Blocks ads and trackers<br>
+                       ✓ Blocks malware and phishing sites<br>
+                       ✓ Fast DNS resolution</p>
+                `,
+                family: `
+                    <p><strong>Family Safe Protection:</strong></p>
+                    <p>✓ Blocks ads and trackers<br>
+                       ✓ Blocks malware and phishing sites<br>
+                       ✓ Blocks adult content<br>
+                       ✓ Enforces safe search<br>
+                       ✓ Protects children online</p>
+                `,
+                maximum: `
+                    <p><strong>Maximum Protection:</strong></p>
+                    <p>✓ Blocks ads and trackers<br>
+                       ✓ Blocks malware and phishing sites<br>
+                       ✓ Blocks adult content<br>
+                       ✓ Enforces safe search<br>
+                       ✓ Aggressive ad blocking<br>
+                       ✓ Extensive tracking prevention<br>
+                       ⚠️ May break some websites</p>
+                `
+            };
+
+            descBox.innerHTML = descriptions[level];
+        }
+
+        function showError(title, message) {
+            document.getElementById('errorTitle').textContent = title;
+            document.getElementById('errorMessage').textContent = message;
+            document.getElementById('errorModal').classList.add('show');
+        }
+
+        function closeErrorModal() {
+            document.getElementById('errorModal').classList.remove('show');
+        }
+
+        function finishSetup() {
+            window.location.href = 'dashboard.html';
+        }
+
+        // Detect current network info (would be populated by backend)
+        window.onload = function() {
+            // In production, fetch this from the backend API
+            const networkInfo = {
+                ip: '192.168.1.100',
+                gateway: '192.168.1.1'
+            };
+
+            document.getElementById('currentIP').textContent = networkInfo.ip;
+            document.getElementById('gateway').textContent = networkInfo.gateway;
+        };
+    </script>
+
+    <!-- Error Modal -->
+    <div id="errorModal" class="error-modal" onclick="closeErrorModal()">
+        <div class="error-modal-content" onclick="event.stopPropagation()">
+            <div class="error-modal-icon">⚠️</div>
+            <h3 id="errorTitle">Oops!</h3>
+            <p id="errorMessage">Something went wrong.</p>
+            <button class="error-modal-button" onclick="closeErrorModal()">Got it</button>
+        </div>
+    </div>
+</body>
+</html>

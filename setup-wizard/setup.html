@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HomeGuard Pro - Setup Wizard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .wizard-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 700px;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .wizard-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .wizard-header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .progress-bar {
+            background: rgba(255,255,255,0.2);
+            height: 8px;
+            border-radius: 4px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: white;
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .wizard-body {
+            padding: 40px;
+        }
+
+        .step {
+            display: none;
+        }
+
+        .step.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .step h2 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.8em;
+        }
+
+        .step p {
+            color: #666;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .radio-option {
+            flex: 1;
+            position: relative;
+        }
+
+        .radio-option input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+        }
+
+        .radio-option label {
+            display: block;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .radio-option input[type="radio"]:checked + label {
+            border-color: #667eea;
+            background: #f0f4ff;
+            color: #667eea;
+        }
+
+        .vpn-config {
+            background: #f8f9fa;
+            border: 2px dashed #667eea;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .vpn-config.show {
+            display: block;
+        }
+
+        .info-box {
+            background: #fff8e1;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .success-box {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+
+        button {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #666;
+        }
+
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .provider-logos {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .provider-logo {
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .provider-logo:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .provider-logo.selected {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+
+        .help-text {
+            font-size: 0.9em;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        .completion-icon {
+            width: 80px;
+            height: 80px;
+            margin: 20px auto;
+            border-radius: 50%;
+            background: #4caf50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            color: white;
+        }
+
+        @media (max-width: 600px) {
+            .wizard-body {
+                padding: 20px;
+            }
+
+            .radio-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="wizard-container">
+        <div class="wizard-header">
+            <h1>🛡️ HomeGuard Pro Setup</h1>
+            <p>Let's get your network protected in just a few steps</p>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressBar" style="width: 16.6%"></div>
+            </div>
+        </div>
+
+        <div class="wizard-body">
+            <!-- Step 1: Welcome -->
+            <div class="step active" id="step1">
+                <h2>Welcome!</h2>
+                <p>HomeGuard Pro will protect your entire network from ads, trackers, and online threats using transparent gateway technology.</p>
+
+                <div class="info-box">
+                    <strong>What happens during setup:</strong>
+                    <ul style="margin-top: 10px; margin-left: 20px;">
+                        <li>Configure network settings</li>
+                        <li>Set up admin password</li>
+                        <li>Optionally integrate your VPN</li>
+                        <li>Enable transparent gateway mode</li>
+                    </ul>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn-primary" onclick="nextStep()">Get Started →</button>
+                </div>
+            </div>
+
+            <!-- Step 2: Admin Password -->
+            <div class="step" id="step2">
+                <h2>Set Admin Password</h2>
+                <p>Create a password to protect your HomeGuard dashboard.</p>
+
+                <div class="form-group">
+                    <label for="adminPassword">Admin Password</label>
+                    <input type="password" id="adminPassword" placeholder="Enter a strong password" required>
+                    <span class="help-text">Minimum 8 characters recommended</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="adminPasswordConfirm">Confirm Password</label>
+                    <input type="password" id="adminPasswordConfirm" placeholder="Re-enter password" required>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn-secondary" onclick="prevStep()">← Back</button>
+                    <button class="btn-primary" onclick="nextStep()">Continue →</button>
+                </div>
+            </div>
+
+            <!-- Step 3: VPN Question -->
+            <div class="step" id="step3">
+                <h2>VPN Integration</h2>
+                <p>Do you have a VPN subscription? HomeGuard can route all your network traffic through it.</p>
+
+                <div class="info-box">
+                    <strong>Benefits of VPN integration:</strong>
+                    <ul style="margin-top: 10px; margin-left: 20px;">
+                        <li>Protect all devices automatically (no per-device setup)</li>
+                        <li>Works with IoT devices that can't run VPN apps</li>
+                        <li>One-time configuration</li>
+                        <li>Change servers easily from dashboard</li>
+                    </ul>
+                </div>
+
+                <div class="form-group">
+                    <label>Do you have a VPN subscription?</label>
+                    <div class="radio-group">
+                        <div class="radio-option">
+                            <input type="radio" id="vpnYes" name="hasVPN" value="yes" onchange="toggleVPNConfig(true)">
+                            <label for="vpnYes">
+                                <div style="font-size: 2em;">✅</div>
+                                <div>Yes, I have a VPN</div>
+                            </label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" id="vpnNo" name="hasVPN" value="no" checked onchange="toggleVPNConfig(false)">
+                            <label for="vpnNo">
+                                <div style="font-size: 2em;">➡️</div>
+                                <div>No, skip this</div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn-secondary" onclick="prevStep()">← Back</button>
+                    <button class="btn-primary" onclick="nextStep()">Continue →</button>
+                </div>
+            </div>
+
+            <!-- Step 4: VPN Provider Selection -->
+            <div class="step" id="step4">
+                <h2>Select VPN Provider</h2>
+                <p>Choose your VPN provider from the list below.</p>
+
+                <div class="provider-logos" id="providerList">
+                    <div class="provider-logo" onclick="selectProvider('nordvpn')" data-provider="nordvpn">
+                        <div style="font-size: 1.5em;">🌐</div>
+                        <div>NordVPN</div>
+                    </div>
+                    <div class="provider-logo" onclick="selectProvider('mullvad')" data-provider="mullvad">
+                        <div style="font-size: 1.5em;">🦫</div>
+                        <div>Mullvad</div>
+                    </div>
+                    <div class="provider-logo" onclick="selectProvider('protonvpn')" data-provider="protonvpn">
+                        <div style="font-size: 1.5em;">🔒</div>
+                        <div>ProtonVPN</div>
+                    </div>
+                    <div class="provider-logo" onclick="selectProvider('surfshark')" data-provider="surfshark">
+                        <div style="font-size: 1.5em;">🦈</div>
+                        <div>Surfshark</div>
+                    </div>
+                    <div class="provider-logo" onclick="selectProvider('pia')" data-provider="pia">
+                        <div style="font-size: 1.5em;">🛡️</div>
+                        <div>PIA</div>
+                    </div>
+                    <div class="provider-logo" onclick="selectProvider('expressvpn')" data-provider="expressvpn">
+                        <div style="font-size: 1.5em;">⚡</div>
+                        <div>ExpressVPN</div>
+                    </div>
+                    <div class="provider-logo" onclick="selectProvider('other')" data-provider="other">
+                        <div style="font-size: 1.5em;">📁</div>
+                        <div>Other</div>
+                    </div>
+                </div>
+
+                <input type="hidden" id="vpnProvider" value="">
+
+                <div class="button-group">
+                    <button class="btn-secondary" onclick="prevStep()">← Back</button>
+                    <button class="btn-primary" onclick="nextStep()" id="providerNext" disabled>Continue →</button>
+                </div>
+            </div>
+
+            <!-- Step 5: VPN Credentials -->
+            <div class="step" id="step5">
+                <h2>VPN Credentials</h2>
+                <p>Enter your VPN account credentials.</p>
+
+                <div id="vpnCredentialsForm">
+                    <!-- Dynamic form based on provider -->
+                </div>
+
+                <div class="info-box">
+                    <strong>🔒 Security Note:</strong> Your credentials are stored locally on HomeGuard and never sent anywhere else.
+                </div>
+
+                <div class="button-group">
+                    <button class="btn-secondary" onclick="prevStep()">← Back</button>
+                    <button class="btn-primary" onclick="nextStep()">Continue →</button>
+                </div>
+            </div>
+
+            <!-- Step 6: Review & Install -->
+            <div class="step" id="step6">
+                <h2>Review Configuration</h2>
+                <p>Please review your settings before we configure HomeGuard.</p>
+
+                <div id="reviewSummary">
+                    <!-- Will be populated dynamically -->
+                </div>
+
+                <div class="info-box">
+                    <strong>What happens next:</strong><br>
+                    HomeGuard will configure all services, enable transparent gateway mode, and start protecting your network. This takes about 2-3 minutes.
+                </div>
+
+                <div class="button-group">
+                    <button class="btn-secondary" onclick="prevStep()">← Back</button>
+                    <button class="btn-primary" onclick="install()">Install & Configure 🚀</button>
+                </div>
+            </div>
+
+            <!-- Step 7: Installing -->
+            <div class="step" id="step7">
+                <div class="loading active">
+                    <div class="spinner"></div>
+                    <h2>Installing HomeGuard Pro...</h2>
+                    <p id="installStatus">Configuring services...</p>
+                </div>
+            </div>
+
+            <!-- Step 8: Complete -->
+            <div class="step" id="step8">
+                <div class="completion-icon">✓</div>
+                <h2 style="text-align: center;">All Done!</h2>
+                <p style="text-align: center;">HomeGuard Pro is now protecting your network.</p>
+
+                <div class="success-box">
+                    <strong>Your network is now protected with:</strong>
+                    <ul style="margin-top: 10px; margin-left: 20px;">
+                        <li>✓ Pi-hole ad/tracker blocking</li>
+                        <li>✓ Unbound DNS privacy</li>
+                        <li>✓ Transparent gateway (client isolation)</li>
+                        <li id="vpnStatus">✓ VPN routing (all traffic protected)</li>
+                    </ul>
+                </div>
+
+                <div class="info-box">
+                    <strong>Access your dashboard:</strong><br>
+                    <a href="/" style="color: #667eea; font-weight: bold;">http://homeguard.local/</a>
+                    or
+                    <span id="dashboardIP" style="color: #667eea; font-weight: bold;">http://192.168.1.100/</span>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn-primary" onclick="window.location.href='/'">Go to Dashboard →</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        const totalSteps = 6; // Steps that count toward progress (excluding installing/complete)
+        let config = {
+            adminPassword: '',
+            hasVPN: false,
+            vpnProvider: '',
+            vpnCredentials: {}
+        };
+
+        function updateProgress() {
+            const progress = (currentStep / totalSteps) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+        }
+
+        function showStep(step) {
+            document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
+            document.getElementById('step' + step).classList.add('active');
+            currentStep = step;
+            updateProgress();
+        }
+
+        function nextStep() {
+            // Validation
+            if (currentStep === 2) {
+                const pass = document.getElementById('adminPassword').value;
+                const confirmPass = document.getElementById('adminPasswordConfirm').value;
+
+                if (pass.length < 8) {
+                    alert('Password must be at least 8 characters');
+                    return;
+                }
+
+                if (pass !== confirmPass) {
+                    alert('Passwords do not match');
+                    return;
+                }
+
+                config.adminPassword = pass;
+            }
+
+            if (currentStep === 3) {
+                config.hasVPN = document.querySelector('input[name="hasVPN"]:checked').value === 'yes';
+
+                if (!config.hasVPN) {
+                    // Skip VPN steps
+                    currentStep = 5;
+                }
+            }
+
+            if (currentStep === 4) {
+                if (!config.vpnProvider) {
+                    alert('Please select a VPN provider');
+                    return;
+                }
+
+                // Populate credentials form
+                populateVPNForm(config.vpnProvider);
+            }
+
+            if (currentStep === 5) {
+                // Gather VPN credentials
+                if (config.hasVPN) {
+                    const form = document.getElementById('vpnCredentialsForm');
+                    const inputs = form.querySelectorAll('input, select');
+                    inputs.forEach(input => {
+                        config.vpnCredentials[input.name] = input.value;
+                    });
+                }
+            }
+
+            if (currentStep === 6) {
+                // Show review summary
+                showReviewSummary();
+            }
+
+            showStep(currentStep + 1);
+        }
+
+        function prevStep() {
+            if (currentStep === 6 && !config.hasVPN) {
+                // Skip back over VPN steps
+                currentStep = 4;
+            }
+            showStep(currentStep - 1);
+        }
+
+        function toggleVPNConfig(show) {
+            // This is for step 3, we don't need the config here anymore
+        }
+
+        function selectProvider(provider) {
+            config.vpnProvider = provider;
+
+            // Update UI
+            document.querySelectorAll('.provider-logo').forEach(el => {
+                el.classList.remove('selected');
+            });
+            document.querySelector(`[data-provider="${provider}"]`).classList.add('selected');
+
+            document.getElementById('vpnProvider').value = provider;
+            document.getElementById('providerNext').disabled = false;
+        }
+
+        function populateVPNForm(provider) {
+            const form = document.getElementById('vpnCredentialsForm');
+
+            const forms = {
+                nordvpn: `
+                    <div class="form-group">
+                        <label>NordVPN Username</label>
+                        <input type="text" name="username" placeholder="Your NordVPN username" required>
+                        <span class="help-text">Found in your NordVPN account dashboard</span>
+                    </div>
+                    <div class="form-group">
+                        <label>NordVPN Password</label>
+                        <input type="password" name="password" placeholder="Your NordVPN password" required>
+                    </div>
+                `,
+                mullvad: `
+                    <div class="form-group">
+                        <label>Mullvad Account Number</label>
+                        <input type="text" name="account" placeholder="16-digit account number" required pattern="[0-9]{16}">
+                        <span class="help-text">Example: 1234567890123456</span>
+                    </div>
+                `,
+                protonvpn: `
+                    <div class="form-group">
+                        <label>ProtonVPN Username</label>
+                        <input type="text" name="username" placeholder="Your ProtonVPN username" required>
+                    </div>
+                    <div class="form-group">
+                        <label>ProtonVPN Password</label>
+                        <input type="password" name="password" placeholder="Your ProtonVPN password" required>
+                    </div>
+                `,
+                surfshark: `
+                    <div class="form-group">
+                        <label>Surfshark Username</label>
+                        <input type="text" name="username" placeholder="Your Surfshark username" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Surfshark Password</label>
+                        <input type="password" name="password" placeholder="Your Surfshark password" required>
+                    </div>
+                `,
+                pia: `
+                    <div class="form-group">
+                        <label>PIA Username</label>
+                        <input type="text" name="username" placeholder="Your PIA username" required>
+                    </div>
+                    <div class="form-group">
+                        <label>PIA Password</label>
+                        <input type="password" name="password" placeholder="Your PIA password" required>
+                    </div>
+                `,
+                expressvpn: `
+                    <div class="form-group">
+                        <label>ExpressVPN Activation Code</label>
+                        <input type="text" name="activation_code" placeholder="Your activation code" required>
+                        <span class="help-text">Found in your ExpressVPN account</span>
+                    </div>
+                `,
+                other: `
+                    <div class="form-group">
+                        <label>Configuration File</label>
+                        <input type="file" name="config_file" accept=".ovpn,.conf" required>
+                        <span class="help-text">Upload your OpenVPN (.ovpn) or WireGuard (.conf) config file</span>
+                    </div>
+                `
+            };
+
+            form.innerHTML = forms[provider] || '';
+        }
+
+        function showReviewSummary() {
+            const summary = document.getElementById('reviewSummary');
+
+            let vpnSummary = '<li>VPN: <strong>Not configured</strong></li>';
+            if (config.hasVPN) {
+                vpnSummary = `<li>VPN Provider: <strong>${config.vpnProvider}</strong></li>`;
+            }
+
+            summary.innerHTML = `
+                <ul style="list-style: none; padding: 0;">
+                    <li style="padding: 10px; background: #f8f9fa; margin-bottom: 10px; border-radius: 5px;">
+                        ✓ Admin password: <strong>Set (hidden)</strong>
+                    </li>
+                    <li style="padding: 10px; background: #f8f9fa; margin-bottom: 10px; border-radius: 5px;">
+                        ${vpnSummary}
+                    </li>
+                    <li style="padding: 10px; background: #f8f9fa; margin-bottom: 10px; border-radius: 5px;">
+                        ✓ Transparent Gateway: <strong>Enabled</strong>
+                    </li>
+                    <li style="padding: 10px; background: #f8f9fa; margin-bottom: 10px; border-radius: 5px;">
+                        ✓ DNS Filtering: <strong>Pi-hole + Unbound</strong>
+                    </li>
+                </ul>
+            `;
+        }
+
+        async function install() {
+            showStep(7);
+
+            try {
+                // Send configuration to backend
+                const response = await fetch('/api/setup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(config)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Setup failed');
+                }
+
+                // Simulate progress updates
+                const statuses = [
+                    'Configuring network interfaces...',
+                    'Installing Pi-hole...',
+                    'Configuring Unbound...',
+                    'Setting up transparent gateway...',
+                    'Configuring VPN client...',
+                    'Finalizing configuration...'
+                ];
+
+                for (let i = 0; i < statuses.length; i++) {
+                    await new Promise(resolve => setTimeout(resolve, 3000));
+                    document.getElementById('installStatus').textContent = statuses[i];
+                }
+
+                // Get result
+                const result = await response.json();
+
+                // Update completion screen
+                if (!config.hasVPN) {
+                    document.getElementById('vpnStatus').style.display = 'none';
+                }
+
+                document.getElementById('dashboardIP').textContent = `http://${result.ip}/`;
+
+                // Show completion
+                showStep(8);
+
+            } catch (error) {
+                alert('Setup failed: ' + error.message);
+                showStep(6);
+            }
+        }
+
+        // Initialize
+        updateProgress();
+    </script>
+</body>
+</html>
