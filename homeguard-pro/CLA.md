@@ -1,0 +1,82 @@
+# Contributor License Agreement
+
+## Agreement
+
+By submitting a pull request to this repository, you agree to the following terms:
+
+### 1. Grant of Copyright License
+
+You grant the HomeGuard Pro project and its maintainers a perpetual, worldwide, non-exclusive, no-charge, royalty-free, irrevocable copyright license to reproduce, prepare derivative works of, publicly display, publicly perform, sublicense, and distribute your contributions and such derivative works.
+
+### 2. Grant of Patent License
+
+You grant the HomeGuard Pro project and its maintainers a perpetual, worldwide, non-exclusive, no-charge, royalty-free, irrevocable patent license to make, have made, use, offer to sell, sell, import, and otherwise transfer your contributions.
+
+### 3. You Represent That:
+
+- You are legally entitled to grant the above licenses
+- Your contribution is your original creation
+- Your contribution does not violate any third-party licenses or intellectual property rights
+- You have the right to submit the work under the MIT license
+
+### 4. MIT License
+
+All contributions to this project are licensed under the MIT License. The project will always maintain an MIT-licensed version available to the public.
+
+### 5. No Obligation
+
+You are not required to provide support for your contributions. You may provide support for free, for a fee, or not at all.
+
+---
+
+## Why We Use This CLA
+
+**For You (the contributor):**
+- ✅ Your code remains MIT licensed (free and open)
+- ✅ You retain copyright to your work
+- ✅ You can use your code in other projects
+- ✅ You get credit for your contributions
+
+**For the Project:**
+- ✅ Clear legal rights to distribute and maintain the code
+- ✅ Ability to defend against patent trolls
+- ✅ Option to offer commercial support/licenses (while keeping MIT version free)
+- ✅ Protection against bad acquisitions (clear ownership)
+
+**For Users:**
+- ✅ Code will always be MIT licensed
+- ✅ Project can be forked if needed
+- ✅ Clear legal standing
+
+---
+
+## Our Promise
+
+The core HomeGuard Pro software will **always** have an MIT-licensed version available. This CLA simply gives the project maintainers flexibility to:
+
+- Offer paid enterprise support
+- Create commercial licenses for businesses (optional)
+- Sustain development financially
+- Defend the project legally
+
+**We will never:**
+- ❌ Make the core software proprietary
+- ❌ Remove the MIT license from existing code
+- ❌ Prevent community forks
+- ❌ Charge home users for basic features
+
+---
+
+## How This Works
+
+**Simple:** By opening a pull request, you automatically agree to this CLA.
+
+No forms to sign, no emails to send, no tracking required.
+
+If you have questions or concerns about this agreement, please open an issue before submitting your PR.
+
+---
+
+**This CLA is based on common open source CLAs used by projects like Apache, Kubernetes, and TensorFlow.**
+
+Last Updated: 2025-11-28

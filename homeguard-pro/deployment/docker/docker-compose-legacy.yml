@@ -1,0 +1,73 @@
+version: '3'
+
+services:
+  # Unbound - Recursive DNS resolver for privacy
+  unbound:
+    image: docker.io/mvance/unbound:latest
+    container_name: unbound
+    restart: unless-stopped
+    hostname: unbound
+    volumes:
+      - ./unbound/unbound.conf:/opt/unbound/etc/unbound/unbound.conf:ro
+    ports:
+      - "127.0.0.1:5335:5335/tcp"
+      - "127.0.0.1:5335:5335/udp"
+    networks:
+      - security-net
+
+  # Pi-hole - DNS with ad-blocking
+  pihole:
+    image: docker.io/pihole/pihole:latest
+    container_name: pihole
+    restart: unless-stopped
+    hostname: pihole
+    depends_on:
+      - unbound
+    environment:
+      TZ: 'America/New_York'
+      WEBPASSWORD: 'S!o2M#e4T%h6I&n8G('  # Change this!
+      PIHOLE_DNS_: 'unbound#5335'  # Point to unbound container by hostname
+      DNSSEC: 'true'
+      DNSMASQ_LISTENING: 'all'
+    volumes:
+      - ./pihole/etc-pihole:/etc/pihole
+      - ./pihole/etc-dnsmasq.d:/etc/dnsmasq.d
+    ports:
+      - "127.0.0.1:53:53/tcp"
+      - "127.0.0.1:53:53/udp"
+      - "127.0.0.1:8080:80/tcp"  # Web interface
+    networks:
+      - security-net
+
+  # Squid - HTTP/HTTPS proxy
+  squid:
+    image: docker.io/ubuntu/squid:latest
+    container_name: squid
+    restart: unless-stopped
+    hostname: squid
+    ports:
+      - "127.0.0.1:3128:3128/tcp"
+    volumes:
+      - ./squid/cache:/var/spool/squid
+      - ./squid/logs:/var/log/squid
+      - ./squid/squid.conf:/etc/squid/squid.conf:ro
+    networks:
+      - security-net
+
+  # Dante - SOCKS5 proxy
+  dante:
+    image: docker.io/wernight/dante:latest
+    container_name: dante
+    restart: unless-stopped
+    hostname: dante
+    ports:
+      - "127.0.0.1:1080:1080/tcp"
+    networks:
+      - security-net
+
+networks:
+  security-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
